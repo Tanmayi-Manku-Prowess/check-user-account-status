@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_b1ba04a6_44a3_48f9_933a_eab5e23e9238_Input_Payload = Array<{|  USERNAME: String,   EMAIL_ADDRESS?: String,   ACCOUNT_CREATED_ON: Date,   LAST_LOGGED_IN?: Date,   ACCOUNT_STATUS?: String,   STATUS_UPDATED_ON?: Date,   ALERT_SENT?: String|}>
+

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<error-handler name="globalErrorHandlerError_Handler" doc:id="e913f79d-050a-408d-bac0-17122bc0ad15" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="Handle JMS Connectivity Error" doc:id="8d5fc8bb-27a8-45f6-bec6-7a4ba249b48e" type="JMS:CONNECTIVITY">
+					<logger level="ERROR" doc:name="Log error description" doc:id="e0df87ed-2c1a-457e-b8b1-bd58f0cccb33" message="JMS publish failed due to connectivity issue: #[error.description]"/>
+					<ee:transform doc:name="Set Error Response" doc:id="f9583c83-f278-4e24-9f64-f8890f6915b6" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{ 
+	"status": "FAILED",
+	"errorType": error.errorType.identifier,
+	"reason": error.description
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="28937f14-2baf-4f59-8ecc-05c137e503e6" message="#[payload]"/>
+				
+	</on-error-continue>
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="Handle DB Connectivity Error" doc:id="14d0dbed-e1d0-4295-a713-fed743b3e915" type="DB:CONNECTIVITY">
+					<logger level="ERROR" doc:name="Log error description" doc:id="d95af121-c1e2-4afe-bc44-e776018ef4d7" message='DB connectivity error: #[error.description]'/>
+					<ee:transform doc:name="Set Error Response" doc:id="828aadc4-97e9-47d6-afb4-3617fc7e1086" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{ 
+	"status": "FAILED",
+	"errorType": error.errorType.identifier,
+	"reason": error.description
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				
+</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="ANY Error Handler" doc:id="b0dd8d29-8d93-4ace-ab9d-7e6d5ab13b19" type="ANY" >
+			<logger level="ERROR" doc:name="Log error description" doc:id="a71177a7-abc4-4dd1-8f89-61fba2986546" message="Unexpected error occurred: #[error.description]" />
+			<ee:transform doc:name="Set Error Response" doc:id="2243b920-4195-4ea1-81f4-b92a3d6a9407" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{ 
+	"status": "FAILED",
+	"errorType": error.errorType.identifier,
+	"reason": error.description
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-propagate>
+	</error-handler>
+
+</mule>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:db="http://www.mulesoft.org/schema/mule/db"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+          http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+          http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+          http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+          http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="xaTransactionPocMainFlowFlow" doc:id="4b200b13-80a0-49c8-8fb5-2e3d364c7ef9" >
+		<http:listener doc:name="Receive Username" doc:id="097d656b-2cd3-471b-b63d-1e067a6c99e1" config-ref="HTTP_8081_Listener_config" path="/account-status"/>
+		<db:select doc:name="GET user details" doc:id="9a56bb5a-5895-46f5-9f93-58d4478e59ba" config-ref="Database_Config" targetValue="#[payload[0]]" target="user">
+			<db:sql ><![CDATA[select * from user_accounts where username = :username]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"username": payload.username
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Check for User Existance" doc:id="9626b240-21b9-47a7-b203-521f29020251" >
+			<when expression="#[isEmpty(vars.user)]">
+				<ee:transform doc:name="User Not Found Response" doc:id="e71f7cf9-8f09-4540-afb7-7cf68c1f334f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    success: false,
+    status: "NOT_FOUND",
+    "message": "User not found for username: "++ payload.username
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<choice doc:name="Evaluate User Account Status" doc:id="4b59b436-0f69-4d17-91d5-5726cace6c03">
+			<when expression="#[(daysBetween(vars.user.LAST_LOGGED_IN as Date, now() as Date)) &gt; 60 &#10;and (vars.user.ALERT_SENT == null or vars.user.ALERT_SENT == 'NO') &#10;and (vars.user.ACCOUNT_STATUS == null or vars.user.ACCOUNT_STATUS == 'ACTIVE')]">
+				<flow-ref doc:name="Update Account Status Flow Reference" doc:id="c5f0a134-e2bd-4167-b69e-d1ffdb872a63" name="updateAccountStatusSub_Flow" />
+			</when>
+			<when expression="#[vars.user.ACCOUNT_STATUS == 'INACTIVE' and vars.user.ALERT_SENT == 'YES' and (vars.user.LAST_LOGGED_IN as Date) &lt; (vars.user.STATUS_UPDATED_ON as Date)]">
+				<flow-ref doc:name="Delete User Flow Reference" doc:id="26d50ec4-b136-425f-ba69-bc3075f44446" name="deleteUserSub_Flow" />
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Active User Response" doc:id="99ced849-860a-4671-a9e4-6da2dd3ef63b">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": vars.user.USERNAME ++ " is Active, no need to update status."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Flow Final Response" doc:id="dceeafeb-898f-4330-968d-c6f7b1ceb708" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log Flow Response" doc:id="27200e31-5244-455b-bcac-30aa602c3eeb" message="#[payload]"/>
+		<error-handler ref="globalErrorHandlerError_Handler" />
+	</flow>
+
+
+</mule>

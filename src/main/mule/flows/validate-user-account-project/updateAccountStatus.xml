@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="updateAccountStatusSub_Flow" doc:id="050d9602-4a07-438a-a61a-060d24e95bf5" >
+		<try doc:name="Try - Update and Send message to Queue" doc:id="37c202f7-c0f7-40d6-ad32-d5dc573e9938" transactionalAction="ALWAYS_BEGIN" transactionType="XA">
+			<db:update doc:name="Update user account_status" doc:id="049b00df-c81b-4431-857e-3570286d969b" config-ref="Database_Config">
+			<db:sql><![CDATA[UPDATE user_accounts SET account_status = 'INACTIVE', status_updated_on = CURRENT_DATE, alert_sent = 'YES' WHERE username = :username]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	"username": vars.user.USERNAME
+}]]]></db:input-parameters>
+		</db:update>
+			<jms:publish doc:name="Publish Message to alertQueue" doc:id="b11c658a-2f33-4b5b-8d5b-1e8f9dd01b2e" config-ref="JMS_Config" destination="alertUserQueue">
+			<jms:message>
+				<jms:body><![CDATA[#[{
+	"user": vars.user.USERNAME,
+	"email": vars.user.EMAIL_ADDRESS,
+	"message": "Account Inactive for more than 60 days, account_status updated to INACTIVE"
+}]]]></jms:body>
+			</jms:message>
+		</jms:publish>
+			<ee:transform doc:name="Response after UPDATE and Publish message" doc:id="a15c51a2-81c3-43b6-9a84-10f4e442001b" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+	"message": vars.user.USERNAME ++ " account status is set to 'Inactive' as user has been inactive for over 60 days."
+}
+]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</try>
+	</sub-flow>
+</mule>

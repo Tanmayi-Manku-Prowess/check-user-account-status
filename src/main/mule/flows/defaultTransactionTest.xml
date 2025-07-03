@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="defaultTransactionFlow" doc:id="fc962172-f587-4860-88e1-deb3d6e20de5" >
+		<http:listener doc:name="Listener" doc:id="43d94fed-8223-40f8-a309-c40ed31d084d" config-ref="HTTP_8081_Listener_config" path="/default"/>
+		<try doc:name="Try" doc:id="83a725a3-7099-4559-b6d2-94bc8a279fa1" transactionalAction="ALWAYS_BEGIN">
+			<db:update doc:name="Update user account_status" doc:id="d3b95ba4-8524-436c-8cdd-45b6c407ea56" config-ref="Database_Config">
+			<db:sql><![CDATA[UPDATE user_accounts SET account_status = 'ACTIVE' where username = :username]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	"username": payload.username
+}]]]></db:input-parameters>
+		</db:update>
+			<db:select doc:name="GET alert not received users" doc:id="3121ede9-4f66-4d3e-a549-d5fcba797be0" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from user_accounts where alert_sent = 'NO']]></db:sql>
+		</db:select>
+			<set-variable value="#[payload]" doc:name="beforeUpdate" doc:id="3aefbfc9-89e9-4744-8c58-3f377d5a0f33" variableName="beforeUpdate"/>
+			<db:update doc:name="Update to" doc:id="a0a9bfb7-7445-4d3c-8827-24fe11b63b76" config-ref="Database_Config">
+				<db:sql ><![CDATA[update user_accounts set alert_sent = 'YES' where username = :username]]></db:sql>
+				<db:input-parameters ><![CDATA[#[{
+	"username": vars.beforeUpdate.USERNAME
+}]]]></db:input-parameters>
+			</db:update>
+			<db:select doc:name="GET details after Update" doc:id="14a0a92c-0def-43bf-91e7-3a01efbbff58" config-ref="Database_Config">
+				<db:sql ><![CDATA[select * from user_accounts where username = :username]]></db:sql>
+				<db:input-parameters ><![CDATA[#[{
+	"username": vars.beforeUpdate.USERNAME
+}]]]></db:input-parameters>
+			</db:select>
+			<db:delete doc:name="Delete error" doc:id="a50ab5aa-6482-400e-b151-cb938561b31e" config-ref="Database_Config">
+				<db:sql ><![CDATA[delete from user_accounts where username = 'user12']]></db:sql>
+			</db:delete>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1f0cf512-6835-4a7d-89c0-4e71c4e05934" type="ANY">
+					<ee:transform doc:name="Transform Message" doc:id="ba95f624-5b3d-442e-8097-3eab023df255">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+"flow failed and is in error continue."]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="01764d36-2334-4e45-ab68-2a96697de4e9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"errorMessage": payload,
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

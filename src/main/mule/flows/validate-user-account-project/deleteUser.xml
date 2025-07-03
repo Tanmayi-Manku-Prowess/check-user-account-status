@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="deleteUserSub_Flow" doc:id="b1ba04a6-44a3-48f9-933a-eab5e23e9238" >
+		<try doc:name="Try - Delete and Send message to Queue" doc:id="83b4b0a7-a435-4ae6-8bc9-d9e3ee55a08b" transactionalAction="ALWAYS_BEGIN" transactionType="XA">
+			<db:delete doc:name="Delete User from Database" doc:id="f0bd0b99-4b4f-4573-93d7-f8b7e5d8ed4a" config-ref="Database_Config">
+			<db:sql><![CDATA[DELETE FROM user_accounts WHERE username = :username]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	"username": vars.user.USERNAME
+}]]]></db:input-parameters>
+		</db:delete>
+			<jms:publish doc:name="Publish Message to deleteQueue" doc:id="fd882bc3-28e8-4f61-be62-e4cee5913017" config-ref="JMS_Config" destination="accountDeleteQueue">
+			<jms:message>
+				<jms:body><![CDATA[#[{
+	"user": vars.user.USERNAME,
+	"email": vars.user.EMAIL_ADDRESS,
+	"message": "As User is not active, account is successfully deleted."
+}]]]></jms:body>
+			</jms:message>
+		</jms:publish>
+			<ee:transform doc:name="Response after DELETE and Publish Message" doc:id="8db82c50-08d1-4e92-b479-07645df6e9f7" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Success",
+	"message": "User: " ++ vars.user.USERNAME ++ " was deleted due to being inactive."
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</try>
+	</sub-flow>
+</mule>
