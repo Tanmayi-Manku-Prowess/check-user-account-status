@@ -1,0 +1,12 @@
+http:
+  host: "localhost"
+  port: "8081"
+  basepath: "/base"
+  mainflow: "/account-status"
+
+db:
+  host: "localhost"
+  port: "1521"
+  user: "muleuser"
+  password: "muleuser"
+  service: "XEPDB1"

@@ -30,7 +30,7 @@ output application/json
 ---
 {
 	"status": "Success",
-	"message": "User: " ++ vars.user.USERNAME ++ " was deleted due to being inactive."
+	"message": "User: " ++ (vars.user.USERNAME default "UNKNOWN_USER") ++ " was deleted due to being inactive."
 }]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>

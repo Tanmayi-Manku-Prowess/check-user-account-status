@@ -30,7 +30,7 @@ output application/json
 ---
 {
 	"status": "Success",
-	"message": vars.user.USERNAME ++ " account status is set to 'Inactive' as user has been inactive for over 60 days."
+	"message": (vars.user.USERNAME default "UNKNOWN_USER") ++ " account status is set to 'Inactive' as user has been inactive for over 60 days."
 }
 ]]></ee:set-payload>
 				</ee:message>

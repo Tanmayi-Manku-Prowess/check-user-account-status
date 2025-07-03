@@ -20,7 +20,7 @@ output application/json
 }]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
-			<logger level="INFO" doc:name="Logger" doc:id="28937f14-2baf-4f59-8ecc-05c137e503e6" message="#[payload]"/>
+			<logger level="INFO" doc:name="Log Error Response" doc:id="28937f14-2baf-4f59-8ecc-05c137e503e6" message="#[payload]"/>
 				
 	</on-error-continue>
 				<on-error-propagate enableNotifications="true" logException="true" doc:name="Handle DB Connectivity Error" doc:id="14d0dbed-e1d0-4295-a713-fed743b3e915" type="DB:CONNECTIVITY">
@@ -37,6 +37,7 @@ output application/json
 }]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
+			<logger level="INFO" doc:name="Log Error Response" doc:id="f2a6faf1-51c6-4455-ac9d-a4c35f8cfae7" message="#[payload]"/>
 				
 </on-error-propagate>
 		<on-error-propagate enableNotifications="true" logException="true" doc:name="ANY Error Handler" doc:id="b0dd8d29-8d93-4ace-ab9d-7e6d5ab13b19" type="ANY" >
@@ -53,6 +54,7 @@ output application/json
 }]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
+			<logger level="INFO" doc:name="Log Error Response" doc:id="8d2f291d-ff08-4060-b2a4-8307a793c4b2" message="#[payload]"/>
 		</on-error-propagate>
 	</error-handler>
 

@@ -35,25 +35,29 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
 				<db:sql ><![CDATA[delete from user_accounts where username = 'user12']]></db:sql>
 			</db:delete>
 			<error-handler >
-				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1f0cf512-6835-4a7d-89c0-4e71c4e05934" type="ANY">
-					<ee:transform doc:name="Transform Message" doc:id="ba95f624-5b3d-442e-8097-3eab023df255">
+				<on-error-continue enableNotifications="true" logException="true" doc:name="Handle Error" doc:id="1f0cf512-6835-4a7d-89c0-4e71c4e05934" type="ANY">
+					<ee:transform doc:name="Set Error Response" doc:id="ba95f624-5b3d-442e-8097-3eab023df255">
 						<ee:message>
 							<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-"flow failed and is in error continue."]]></ee:set-payload>
+{ 
+	"status": "FAILED",
+	"errorType": error.errorType.identifier,
+	"reason": error.description
+}]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
 				</on-error-continue>
 			</error-handler>
 		</try>
-		<ee:transform doc:name="Transform Message" doc:id="01764d36-2334-4e45-ab68-2a96697de4e9" >
+		<ee:transform doc:name="Flow Final Response" doc:id="01764d36-2334-4e45-ab68-2a96697de4e9" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
 {
-	"errorMessage": payload,
+	"Response": payload default "Response from action",
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>

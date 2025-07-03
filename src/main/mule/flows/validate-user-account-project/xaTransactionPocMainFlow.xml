@@ -29,7 +29,7 @@ output application/json
 {
     success: false,
     status: "NOT_FOUND",
-    "message": "User not found for username: "++ payload.username
+    "message": "User not found for username: "++ (payload.username default "UNKNOWN_USER")
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
@@ -62,7 +62,7 @@ output application/json
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
-payload]]></ee:set-payload>
+payload default {}]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<logger level="INFO" doc:name="Log Flow Response" doc:id="27200e31-5244-455b-bcac-30aa602c3eeb" message="#[payload]"/>

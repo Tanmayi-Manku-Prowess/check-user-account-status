@@ -22,5 +22,5 @@ http://www.mulesoft.org/schema/mule/ee/bti http://www.mulesoft.org/schema/mule/e
 		</jms:active-mq-connection>
 	</jms:config>
 	<bti:transaction-manager doc:name="Bitronix Transaction Manager" doc:id="d5f03b4d-aab6-476e-9d20-988b2e2e722f" />
-	<configuration-properties doc:name="Configuration properties" doc:id="5e6d8df2-c587-491c-90ea-0a191ee12fad" file="config.properties" />
+	<configuration-properties doc:name="Configuration properties" doc:id="5e6d8df2-c587-491c-90ea-0a191ee12fad" file="config.yaml" />
 </mule>
